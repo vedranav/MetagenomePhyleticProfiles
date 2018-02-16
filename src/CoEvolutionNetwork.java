@@ -42,6 +42,10 @@ public class CoEvolutionNetwork
         //IMPORTANT!!!!
         //This code assumes that you have R and R package 'RandomForest' already installed on your computer.
         //In addition, you will need to install Gephi (http://gephi.org) to visualize a co-evolution network.
+        //If you get an error "Cannot run program "Rscript": error=2, No such file or directory", you should
+        //set the path to Rscript in "utils.RUtils" by adding the path to the line
+        //"String[] rscript = {"/ADD PATH HERE/Rscript", rscriptFileName};".
+        //You can find out the path by running "type -a Rscript" in a terminal (tested on Ubuntu and MacOS).
         
         //-----------------------------------
         //SELECT THE EXAMPLE FROM THE PAPER
