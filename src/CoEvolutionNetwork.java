@@ -49,8 +49,8 @@ public class CoEvolutionNetwork
         
         //-----------------------------------
         //SELECT THE EXAMPLE FROM THE PAPER
-        boolean Fig3aExample = true;
-        boolean Fig3cExample = true;
+        boolean Fig3a = true;
+        boolean Fig3c = true;
         //-----------------------------------
         
         //-----------------------------------
@@ -60,7 +60,7 @@ public class CoEvolutionNetwork
         //-----------------------------------
         
         
-        if (Fig3aExample)
+        if (Fig3a)
         {
             outDir += "Fig3a/";
             
@@ -82,7 +82,7 @@ public class CoEvolutionNetwork
                                         new File(outDir + "CoEvolution_network.gexf"));
         }
         
-        if (Fig3cExample)
+        if (Fig3c)
         {
             outDir += "Fig3c/";
             

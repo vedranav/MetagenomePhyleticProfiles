@@ -36,7 +36,12 @@ public class ResourceLoaders
         
         while((line = br.readLine()) != null)
             if (!line.startsWith("OG"))
-                ogs.add(ogStrToOgInt(line.substring(0, line.indexOf("\t"))));
+            {
+                int og = ogStrToOgInt(line.substring(0, line.indexOf("\t")));
+                
+                if (loadOnlyOGs == null || loadOnlyOGs.contains(og))
+                    ogs.add(og);
+            }
         
         System.out.println("Gene families: " + ogs.size());
         
@@ -105,6 +110,11 @@ public class ResourceLoaders
         }
         
         return null;
+    }
+    
+    public static String ogToStr(int og)
+    {
+        return (og < 0 ? "NOG" + (-og) : "COG" + og);
     }
     
     public static Map<Integer, Set<Integer>> extractOg2FuncsFromPrTable(Table<Integer, Integer, Double> prScoresTable, double prThreshold)
