@@ -3,6 +3,8 @@ package utils;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import static utils.FileUtils.findReaderType;
@@ -38,5 +40,27 @@ public class GoFunctionsUtils
         }
         
         return prokaryoticGOs;
+    }
+    
+    public static Map<Integer, Double> loadGOFunctionFrequencies(File inFileWithUniprotFrequencies) throws IOException
+    {
+        Map<Integer, Double> func2Freq = new HashMap<>();
+        
+        BufferedReader br = findReaderType(inFileWithUniprotFrequencies);
+        
+        String line;
+
+        while ((line=br.readLine()) != null)
+            if (!line.startsWith("#"))
+            {
+                String[] parts = line.split("\t");
+
+                int go = Integer.parseInt(parts[0]);
+                double frequency = Double.parseDouble(parts[1]);
+
+                func2Freq.put(go, frequency);                
+            }
+        
+        return func2Freq;
     }
 }

@@ -1,3 +1,5 @@
+package MPP_Tools;
+
 import com.google.common.collect.ArrayTable;
 import com.google.common.collect.Table;
 import com.google.common.collect.TreeBasedTable;
@@ -30,81 +32,9 @@ import weka.filters.unsupervised.instance.RemoveRange;
  *
  * @author Vedrana Vidulin [vedrana.vidulin@ijs.si]
  * 
- * For details please look at Vidulin, V., Smuc, T., Dzeroski, S. and Supek, F. (2018)
- * Automated gene function prediction using metagenome data. Under review in Microbiome.
- * 
- * If you find this code useful, please cite the paper.
  */
 public class CoEvolutionNetwork
 {
-    public static void main(String[] args) throws Exception
-    {
-        //IMPORTANT!!!!
-        //This code assumes that you have R and R package 'RandomForest' already installed on your computer.
-        //In addition, you will need to install Gephi (http://gephi.org) to visualize a co-evolution network.
-        //If you get an error "Cannot run program "Rscript": error=2, No such file or directory", you should
-        //set the path to Rscript in "utils.RUtils" by adding the path to the line
-        //"String[] rscript = {"/ADD PATH HERE/Rscript", rscriptFileName};".
-        //You can find out the path by running "type -a Rscript" in a terminal (tested on Ubuntu and MacOS).
-        
-        //-----------------------------------
-        //SELECT THE EXAMPLE FROM THE PAPER
-        boolean Fig3a = true;
-        boolean Fig3c = true;
-        //-----------------------------------
-        
-        //-----------------------------------
-        //SET PATHS
-        String dataDir = ".../MetagenomePhyleticProfiles/src/data/";
-        String outDir = "...";
-        //-----------------------------------
-        
-        
-        if (Fig3a)
-        {
-            outDir += "Fig3a/";
-            
-            int goFunctionOnWhich_MPP_PerformsBetter = 51540;
-            int goFunctionOnWhich_PP_PerformsBetter = 3954;
-            
-            randomForestFeatureSelection(new File(dataDir + "MPP-I.arff.zip"), new File(dataDir + "PP-I.arff.zip"),
-                                         goFunctionOnWhich_MPP_PerformsBetter, goFunctionOnWhich_PP_PerformsBetter,
-                                         new File(outDir));
-
-            computeSimilaritiesBetweenOGs(new File(outDir + "MPP-I.csv"), new File(outDir + "PP-I.csv"),
-                                          new File(outDir + "Pearson_correlation_coefficients.txt"));
-
-            drawPearsonCorrelationCoefficientDistributionGraph(new File(outDir + "Pearson_correlation_coefficients.txt"),
-                                                               new File(outDir));
-
-            composeGephiFileWithNetwork(new File(outDir + "MPP-I.csv"), new File(outDir + "PP-I.csv"), 0.7,
-                                        new File(outDir + "Pearson_correlation_coefficients.txt"),
-                                        new File(outDir + "CoEvolution_network.gexf"));
-        }
-        
-        if (Fig3c)
-        {
-            outDir += "Fig3c/";
-            
-            int goFunctionOnWhich_MPP_PerformsBetter = 4812;
-            int goFunctionOnWhich_PP_PerformsBetter = 6520;
-            
-            randomForestFeatureSelection(new File(dataDir + "MPP-I.arff.zip"), new File(dataDir + "PP-I.arff.zip"),
-                                         goFunctionOnWhich_MPP_PerformsBetter, goFunctionOnWhich_PP_PerformsBetter,
-                                         new File(outDir));
-
-            computeSimilaritiesBetweenOGs(new File(outDir + "MPP-I.csv"), new File(outDir + "PP-I.csv"),
-                                          new File(outDir + "Pearson_correlation_coefficients.txt"));
-
-            drawPearsonCorrelationCoefficientDistributionGraph(new File(outDir + "Pearson_correlation_coefficients.txt"),
-                                                               new File(outDir));
-
-            composeGephiFileWithNetwork(new File(outDir + "MPP-I.csv"), new File(outDir + "PP-I.csv"), 0.7,
-                                        new File(outDir + "Pearson_correlation_coefficients.txt"),
-                                        new File(outDir + "CoEvolution_network.gexf"));
-        }
-    }
-    
     /**
      * Performs Random Forest-based feature selection by keeping the features with positive values of Gini Index.
      * This procedure depends on R and 'randomForest' R package.

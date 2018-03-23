@@ -1,3 +1,5 @@
+package MPP_Tools;
+
 import com.google.common.collect.ArrayTable;
 import com.google.common.collect.Table;
 import java.io.BufferedReader;
@@ -6,10 +8,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import static org.apache.commons.math3.util.Precision.round;
 import static utils.FileUtils.findReaderType;
@@ -26,75 +31,6 @@ import static utils.ResourceLoaders.ogToStr;
  */
 public class ComplementarityGraphs
 {
-    public static void main(String[] args) throws Exception
-    {
-        //IMPORTANT!!!!
-        //This code assumes that you have R already installed on your computer.
-        //If you get an error "Cannot run program "Rscript": error=2, No such file or directory", you should
-        //set the path to Rscript in "utils.RUtils" by adding the path to the line
-        //"String[] rscript = {"/ADD PATH HERE/Rscript", rscriptFileName};".
-        //You can find out the path by running "type -a Rscript" in a terminal (tested on Ubuntu and MacOS).
-        
-        //-----------------------------------
-        //SELECT THE EXAMPLE FROM THE PAPER
-        boolean Fig1_d_e = true;
-        boolean Fig1_fgh_A = true;
-        boolean Fig1_fgh_B = true;
-        boolean Fig1_fgh_C = true;
-        //-----------------------------------
-        
-        //-----------------------------------
-        //SET PATHS
-        String dataDir = ".../MetagenomePhyleticProfiles/src/data/";
-        String outDir = "...";
-        //-----------------------------------
-        
-
-        double[] prThresholds = {0.5, 0.7, 0.9};
-        
-        if (Fig1_d_e)
-            for (double prThreshold : prThresholds)
-            {
-                File inFirstMethodPrecisionFile = new File(dataDir + "MPP-H_predictions.tsv.gz");
-                File inSecondMethodPrecisionFile = new File(dataDir + "MPP-O_predictions.tsv.gz");
-                String firstMethodName = "MPP-H";
-                String secondMethodName = "MPP-O";
-                File inOg2FunctionsFile = new File(dataDir + "og2funcs-eggNOG_3.txt.gz");
-                File inGeneOntologyFile = new File(dataDir + "go_201401-termdb.obo-xml.gz");
-                File outFolderForFig1d = new File(outDir + "/Fig1d/PR-" + prThreshold);
-                                                                                    
-                drawFunctionBasedComplementarityGraphForTwoMethods(inFirstMethodPrecisionFile, inSecondMethodPrecisionFile,
-                    firstMethodName, secondMethodName, "'yellow','green','blue'", prThreshold, inOg2FunctionsFile,
-                    inGeneOntologyFile, outFolderForFig1d);
-                
-                drawGeneFamilyBasedComplementarityGraphForTwoMethods(inFirstMethodPrecisionFile, inSecondMethodPrecisionFile,
-                    new File(outFolderForFig1d + "/Functions_predicted_by_" + firstMethodName + "_and_" + secondMethodName + ".txt"),
-                    firstMethodName, secondMethodName, ".7, .17", "yellow, blue", prThreshold, inOg2FunctionsFile,
-                    inGeneOntologyFile, new File(outDir + "/Fig1e/PR-" + prThreshold));
-            }
-        
-        if (Fig1_fgh_A)
-            for (double prThreshold : prThresholds)
-                drawFunctionBasedComplementarityGraphForTwoMethods(new File(dataDir + "MPP-H_predictions.tsv.gz"),
-                    new File(dataDir + "PP-H_predictions.tsv.gz"), "MPP-H", "PP", "'red','green','blue'", prThreshold,
-                    new File(dataDir + "og2funcs-eggNOG_3.txt.gz"), new File(dataDir + "go_201401-termdb.obo-xml.gz"),
-                    new File(outDir + "/Fig1_fgh_A/PR-" + prThreshold));
-        
-        if (Fig1_fgh_B)
-            for (double prThreshold : prThresholds)
-                drawFunctionBasedComplementarityGraphForTwoMethods(new File(dataDir + "MPP-O_predictions.tsv.gz"),
-                    new File(dataDir + "PP-O_predictions.tsv.gz"), "MPP-O", "PP", "'red','green','blue'", prThreshold,
-                    new File(dataDir + "og2funcs-eggNOG_3.txt.gz"), new File(dataDir + "go_201401-termdb.obo-xml.gz"),
-                    new File(outDir + "/Fig1_fgh_B/PR-" + prThreshold));
-        
-        if (Fig1_fgh_C)
-            for (double prThreshold : prThresholds)
-                drawFunctionBasedComplementarityGraphForTwoMethods(new File(dataDir + "MPP-I_predictions.tsv.gz"),
-                    new File(dataDir + "PP-I_predictions.tsv.gz"), "MPP-I", "PP", "'red','green','blue'", prThreshold,
-                    new File(dataDir + "og2funcs-eggNOG_4.txt.gz"), new File(dataDir + "go_201401-termdb.obo-xml.gz"),
-                    new File(outDir + "/Fig1_fgh_C/PR-" + prThreshold));
-    }
-    
     /**
      * Draws graph that shows the level of complementarity between two classification models in terms of functions
      * they are able to predict at a specific level of precision (Pr).
@@ -358,7 +294,7 @@ public class ComplementarityGraphs
         //Load known functions
         Map<Integer, Set<Integer>> og2known_funcs = loadOg2FunctionsFromFile(inOg2FunctionsFile);
         
-         //Consider only GO functions from prokaryotic GO subset gosubset_prok
+        //Consider only GO functions from prokaryotic GO subset gosubset_prok
         Set<Integer> knownProkFuncs = new TreeSet<>();
         for (Set<Integer> known_funcs : og2known_funcs.values())
             knownProkFuncs.addAll(known_funcs);
@@ -501,6 +437,157 @@ public class ComplementarityGraphs
         
         executeRScript(rScriptFilePath);
         
+        new File(rScriptFilePath).delete();
+    }
+    
+    /**
+     * Draws graph that shows the level of complementarity between multiple classification models in terms of functions
+     * they are able to predict at a specific level of precision (Pr).
+     * This code assumes that you have R on your computer.
+     * 
+     * @param inPrecisionFiles      Tables with Pr scores outputted by the classification models.
+     * @param methodsNames          Names of the methods, i.e., classification models.
+     * @param prThreshold           Predictions with Pr >= prThreshold will be considered as positive.
+     * @param inOg2FunctionsFile    File with known functions from Uniprot-GOA that are assigned to gene families.
+     * @param inGeneOntologyFile    Gene ontology in obo-xml.gz format.
+     * @param outFolder             Folder that will contain graph and statistics files.
+     * 
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public static void drawFunctionBasedComplementarityGraphForMultipleModels(File[] inPrecisionFiles, String[] methodsNames,
+                                                                              double prThreshold, File inOg2FunctionsFile,
+                                                                              File inGeneOntologyFile, File outFolder) throws IOException, InterruptedException
+    {
+        if (!outFolder.exists())
+            outFolder.mkdirs();
+        
+        Map<Integer, Set<Integer>> og2known_funcs = loadOg2FunctionsFromFile(inOg2FunctionsFile);
+        
+        //Consider only GO functions from prokaryotic GO subset gosubset_prok
+        Set<Integer> knownProkFuncs = new TreeSet<>();
+        for (Set<Integer> known_funcs : og2known_funcs.values())
+            knownProkFuncs.addAll(known_funcs);
+        
+        knownProkFuncs = extractOnlyProkaryoticGOs(knownProkFuncs, inGeneOntologyFile);
+        
+        //Load predictions
+        Map<String, Map<Integer, Set<Integer>>> method2og2predictedFuncs = new LinkedHashMap<>();
+        
+        for (int i = 0; i < inPrecisionFiles.length; i++)
+            method2og2predictedFuncs.put(methodsNames[i], extractOg2FuncsFromPrTable(
+                loadPrScoresTable(inPrecisionFiles[i], knownProkFuncs, null), prThreshold));
+        
+        //Count predictions
+        Table<Integer, String, Integer> funcMethodCorrectPredictions = ArrayTable.create(knownProkFuncs, Arrays.asList(methodsNames));
+        
+        for (int og : method2og2predictedFuncs.get(methodsNames[0]).keySet())
+        {
+            Set<Integer> correctlyPredictedFunctions = new HashSet<>();
+            
+            for (String method : method2og2predictedFuncs.keySet())
+                correctlyPredictedFunctions.addAll(method2og2predictedFuncs.get(method).get(og));
+            
+            correctlyPredictedFunctions.retainAll(og2known_funcs.get(og));
+            
+            for (int func : correctlyPredictedFunctions)
+                for (String method : method2og2predictedFuncs.keySet())
+                    if (method2og2predictedFuncs.get(method).get(og).contains(func))
+                        funcMethodCorrectPredictions.put(func, method, (funcMethodCorrectPredictions.get(func, method) == null ? 1 : 
+                                                         funcMethodCorrectPredictions.get(func, method) + 1));
+        }
+        
+        //Write table with statistics to file
+        FileWriter fw = new FileWriter(outFolder + "/GO_functions-methods-a_num_of_gene_families_annotated_by_a_method_with_a_function_at_Pr_threshold.txt");
+        BufferedWriter bw = new BufferedWriter(fw);
+        
+        bw.write("GO function");
+        for (String method : funcMethodCorrectPredictions.columnKeySet())
+            bw.write("\t" + method);
+        bw.write("\n");
+        
+        for (int func : funcMethodCorrectPredictions.rowKeySet())
+        {
+            boolean skip = true;
+            for (String method : funcMethodCorrectPredictions.columnKeySet())
+                if (funcMethodCorrectPredictions.get(func, method) != null && funcMethodCorrectPredictions.get(func, method) > 0)
+                {
+                    skip = false;
+                    break;
+                }
+            
+            if (skip)
+                continue;
+
+            bw.write(String.valueOf(func));
+            for (String method : funcMethodCorrectPredictions.columnKeySet())
+                bw.write("\t" + (funcMethodCorrectPredictions.get(func, method) == null ? 0 : funcMethodCorrectPredictions.get(func, method)));
+            bw.write("\n");
+        }
+        
+        bw.close();
+        
+        //Extract data for drawing histogram
+        Map<Integer, Integer> numMethods_FuncCount = new TreeMap<>();
+        
+        String dataFilePath = outFolder.getAbsolutePath() + "/Histogram_data.txt";
+        fw = new FileWriter(dataFilePath);
+        bw = new BufferedWriter(fw);
+        bw.write("COUNTS\n");
+        
+        for (int func : funcMethodCorrectPredictions.rowKeySet())
+        {
+            int cntMethods = 0;
+            for (String method : funcMethodCorrectPredictions.columnKeySet())
+                if (funcMethodCorrectPredictions.get(func, method) != null && funcMethodCorrectPredictions.get(func, method) > 0)
+                    cntMethods++;
+            
+            if (cntMethods == 0)
+                continue;
+            
+            bw.write(String.valueOf(cntMethods) + "\n");
+            
+            int cntFuncs = 0;
+            if (numMethods_FuncCount.containsKey(cntMethods))
+                cntFuncs = numMethods_FuncCount.get(cntMethods);
+            cntFuncs++;
+            numMethods_FuncCount.put(cntMethods, cntFuncs);
+        }
+        
+        bw.close();
+        
+        fw = new FileWriter(new File(outFolder + "/Graph_statistics.txt"));
+        bw = new BufferedWriter(fw);
+        
+        int total = 0;
+        for (int numFuncs : numMethods_FuncCount.values())
+            total += numFuncs;
+        
+        bw.write("# GO functions: " + total + "\n\n");
+        
+        for (int numMethods : numMethods_FuncCount.keySet())
+            bw.write(numMethods + ": " + numMethods_FuncCount.get(numMethods) + " >> " +
+                     round((double)numMethods_FuncCount.get(numMethods)/(double)total*(double)100,2) + "%\n");
+        
+        bw.close();
+        
+        //Prepare R script
+        String rScriptFilePath = outFolder.getAbsolutePath() + "/Rscript.r";
+        fw = new FileWriter(rScriptFilePath);
+        bw = new BufferedWriter(fw);
+        
+        bw.write("pdf('" + (outFolder.getAbsolutePath() + "/Graph.pdf").replace('\\', '/') + "')\n");  
+        bw.write("data = read.table('" + dataFilePath.replace("\\", "/") + "', header = T)\n");
+        bw.write("counts <- table(data$COUNTS)\n");
+        bw.write("par(lwd = 4)\n");
+        bw.write("barplot(counts, cex.axis = 2.6, cex.names = 2.6)\n");
+        bw.write("dev.off()\n");
+                
+        bw.close();
+        
+        executeRScript(rScriptFilePath);
+        
+        new File(dataFilePath).delete();
         new File(rScriptFilePath).delete();
     }
 }
