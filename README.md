@@ -1,6 +1,6 @@
-#Metagenome Phyletic Profiles
+<h1>Metagenome Phyletic Profiles</h1>
 
-This code supports the paper: Vidulin, V., Smuc, T., Dzeroski, S. and Supek, F. (2018) The evolutionary signal in metagenome phyletic profiles predicts many gene functions. Accepted in Microbiome.
+This code supports the paper: Vidulin, V., Smuc, T., Dzeroski, S. and Supek, F. (2018) The evolutionary signal in metagenome phyletic profiles predicts many gene functions. Accepted in *Microbiome*.
 
 Please cite the paper if you find the code useful.
 
